@@ -15,18 +15,30 @@ const io = socket(server);
 
 io.on('connection', (socket) => {
   
+  // send all list of task
   socket.on('updateData', (tasks) => {
-    console.log('Wysyłanie do nowego klienta listy tasków...');
-    socket.broadcast.emit('updateData', tasks);  // broadcast to all sockets, except one we send it from
+    console.log('Sending a list of tasks to a new client...');
+    socket.emit('updateData', tasks);
+  });
+
+  // new task from client and send this task to the other client
+  socket.on('addTask', (task) => {
+    tasks.push(task);
+    socket.broadcast.emit('addTask', task);
+  });
+
+  // remove task and send removed taskId to the other client
+  socket.on('removeTask', (taskId) => {
+    const taskIndex = tasks.findIndex(tasks => tasks.id == taskId);
+    if (userIndex >= 0) {
+      tasks.splice(taskIndex, 1);
+      socket.broadcast.emit('removeTask', taskId);
+    }
   });
 
 });
 
-app.use(express.static(path.join(__dirname, '/client/')));
-
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '/client/index.html'));
-// });
+// app.use(express.static(path.join(__dirname, '/client/')));
 
 // Endpoint: not found pages
 app.use((req, res) => {
