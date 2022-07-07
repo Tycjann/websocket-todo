@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid'
 
-import Container from '../src/components/common/Container/Container';
-import Section from '../src/components/common/Section/Section';
-import Header from '../src/components/common/Header/Header';
-import HeadLevel2 from '../src/components/common/HeadLevel2/HeadLevel2';
 import TasksList from '../src/components/features/TasksList/TasksList';
 import AddForm from '../src/components/features/AddForm/AddForm';
 
@@ -13,45 +9,70 @@ import io from 'socket.io-client';
 const App = () => {
 
   const [tasks, setTasks] = useState([]);
-  const [taskName, setTaskName] = useState();
+  const [taskName, setTaskName] = useState('');
 
   const [socket, setSocket] = useState();
-  console.log('socket:', socket);
+  // const [socket, setSocket] = useState(io('http://localhost:8000'));
   
   useEffect(() => {
-    setSocket(io('http://localhost:8000'));
-    console.log('Connect...')
+    if (!socket) {
+      setSocket(io('http://localhost:8000'));
+      // const socket = io.connect('http://localhost:8000');
+      // setSocket(socket);
+      console.log('Connect...');
+    }
   }, []);
 
+  console.log('socket:', socket);
+
   const addTask = (newTask) => {
-    setTasks(task => [...task, { id: nanoid(), name: taskName }])
+    console.log('addTask X', newTask);
+    setTasks(task => [...task, newTask]);
   };
 
+  
+  // socket.on('addTask', (task) => {
+  //   console.log('socket ADD:', socket);
+  //   addTask(task);
+  // });
+
+  useEffect(() => {
+    console.log('socket:', socket);
+      socket.on('addTask', (task) => {
+      addTask(task);
+    });
+  }, [socket]);
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!taskName) alert("Please enter a task name");
     else {
-      addTask(taskName);
+      const newTask = { id: nanoid(), name: taskName };
+      addTask(newTask);
+      socket.emit('addTask', newTask);
       setTaskName('');
-      console.log('submit');
-      socket.emit('message', () => { console.log('New task +') });
     }
   };
 
+  const removeTask = (id) => {
+    setTasks(tasks => tasks.filter(task => task.id !== id));
+    socket.emit('removeTask', id);
+    // console.log('remove');
+  };
+
+  // console.log(tasks);
+
   return (
-    <Container 
-      componentClassName="App"
-    >
-      <Header/>
-      <Section 
-        componentClassName="tasks-section" 
-        componentId="tasks-section"
-      >
-        <HeadLevel2>Tasks</HeadLevel2>
-        <TasksList/>
+    <div className="App" >
+      <header>
+        <h1>ToDoList.app</h1>
+      </header>
+      <section className="tasks-section" id="tasks-section">
+        <h2>Tasks</h2>
+        <TasksList action={removeTask} tasks={tasks} />
         <AddForm action={handleSubmit} taskName={taskName} setTaskName={setTaskName} />
-      </Section>
-    </Container>
+      </section>
+    </div>
   );
 }
 

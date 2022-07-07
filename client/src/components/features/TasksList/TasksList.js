@@ -1,19 +1,10 @@
-import Button from '../../common/Button/Button';
-import List from '../../common/List/List';
-import ListElement from '../../common/ListElement/ListElement';
-
-const TasksList = () => {
+const TasksList = ({ tasks, action }) => {
   return (
-    <List>
-      <ListElement>
-        Shopping 
-        <Button>Remove</Button>
-      </ListElement>
-      <ListElement>
-        Go out with a dog
-        <Button>Remove</Button>
-      </ListElement>
-    </List>
+    <ul className="tasks-section__list" id="tasks-list">
+      {tasks.map(task =>
+        <li className="task" key={task.id}>{task.name} <button className="btn btn--red" onClick={() => action(task.id)}>Remove</button></li>
+      )}
+    </ul>
   );
 };
 
