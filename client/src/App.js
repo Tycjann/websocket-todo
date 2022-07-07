@@ -10,38 +10,32 @@ const App = () => {
 
   const [tasks, setTasks] = useState([]);
   const [taskName, setTaskName] = useState('');
-
   const [socket, setSocket] = useState();
-  // const [socket, setSocket] = useState(io('http://localhost:8000'));
-  
-  useEffect(() => {
-    if (!socket) {
-      setSocket(io('http://localhost:8000'));
-      // const socket = io.connect('http://localhost:8000');
-      // setSocket(socket);
-      console.log('Connect...');
-    }
-  }, []);
-
-  console.log('socket:', socket);
 
   const addTask = (newTask) => {
-    console.log('addTask X', newTask);
     setTasks(task => [...task, newTask]);
   };
 
-  
-  // socket.on('addTask', (task) => {
-  //   console.log('socket ADD:', socket);
-  //   addTask(task);
-  // });
-
   useEffect(() => {
-    console.log('socket:', socket);
-      socket.on('addTask', (task) => {
+    const socket = io('http://localhost:8000');
+
+    socket.on('addTask', (task) => {
       addTask(task);
     });
-  }, [socket]);
+
+    socket.on('removeTask', (id) => {
+      removeTask(id);
+    });
+
+    socket.on('updateData', (tasks) => {
+      setTasks(tasks);
+    });
+
+    setSocket(socket);
+
+    return () => socket.close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setSocket]);
   
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -56,11 +50,8 @@ const App = () => {
 
   const removeTask = (id) => {
     setTasks(tasks => tasks.filter(task => task.id !== id));
-    socket.emit('removeTask', id);
-    // console.log('remove');
+    if (socket) socket.emit('removeTask', id);
   };
-
-  // console.log(tasks);
 
   return (
     <div className="App" >
